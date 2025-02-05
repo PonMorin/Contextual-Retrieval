@@ -10,7 +10,7 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.prompts import ChatPromptTemplate
 from rank_bm25 import BM25Okapi
 from langchain_huggingface import ChatHuggingFace, HuggingFacePipeline
-from transformers import BitsAndBytesConfig
+from langchain_openai import ChatOpenAI
 from langchain_community.vectorstores import Chroma
 from langchain_anthropic import ChatAnthropic
 import time
@@ -21,6 +21,7 @@ config = dotenv_values(".env")
 os.environ["OPENAI_API_KEY"] = config["openai_api"]
 os.environ["ANTHROPIC_API_KEY"] = config["ANTHROPIC_API_KEY"]
 
+typhoon_api = config["Typhoon_API"]
 
 def init_model():
     if torch.cuda.is_available():
@@ -28,12 +29,12 @@ def init_model():
     else:
         print("No GPU available. Training will run on CPU.")
    
-    quantization_config = BitsAndBytesConfig(
-    load_in_8bit=True,
-    # bnb_4bit_quant_type="nf4",
-    # bnb_4bit_compute_dtype="float16",
-    # bnb_4bit_use_double_quant=True,
-    )
+    # quantization_config = BitsAndBytesConfig(
+    # load_in_8bit=True,
+    # # bnb_4bit_quant_type="nf4",
+    # # bnb_4bit_compute_dtype="float16",
+    # # bnb_4bit_use_double_quant=True,
+    # )
 
     llm = HuggingFacePipeline.from_model_id(
         model_id="scb10x/llama3.1-typhoon2-8b-instruct",
@@ -44,8 +45,8 @@ def init_model():
             do_sample=True,
             temperature=0.1,
             return_full_text=False,
-        ),
-        model_kwargs={"quantization_config": quantization_config},
+        )
+        # model_kwargs={"quantization_config": quantization_config},
     )
 
     chat_model = ChatHuggingFace(llm=llm)
@@ -76,15 +77,20 @@ class ContextualRetrieval:
                         timeout=None,
                         max_retries=2
                 )
+    
+        self.typhoon_api = ChatOpenAI(base_url='https://api.opentyphoon.ai/v1',
+                            model='typhoon-v2-8b-instruct',
+                            api_key=typhoon_api)
+        
     def process_document(self, document: str) -> Tuple[List[Document], List[Document]]:
         """
         Process a document by splitting it into chunks and generating context for each chunk.
         """
         chunks = self.text_splitter.split_documents([document])
-        # print(f"Split {len(chunks)} Chunks Successful.")
-        # contextualized_chunks = self._generate_contextualized_chunks(document, chunks)
-        # print("Generate Context Chuncks Successful")
-        # return chunks, contextualized_chunks
+        print(f"Split {len(chunks)} Chunks Successful.")
+        contextualized_chunks = self._generate_contextualized_chunks(document, chunks)
+        print("Generate Context Chuncks Successful")
+        return chunks, contextualized_chunks
     
     def _generate_contextualized_chunks(self, document: str, chunks: List[Document]) -> List[Document]:
         """
@@ -132,7 +138,7 @@ class ContextualRetrieval:
         Create a vector DB for the given chunks
         """
         data = f"./doc_Data/{path}"
-        vectordb = Chroma.from_documents(chunks, embedding=OpenAIEmbeddings(), persist_directory=data)
+        vectordb = Chroma.from_documents(chunks, embedding=OpenAIEmbeddings(), persist_directory=data, collection_name="course")
         vectordb.persist()
 
     def create_bm25_index(self, chunks: List[Document]) -> BM25Okapi:
@@ -156,4 +162,20 @@ class ContextualRetrieval:
         """)
         messages = prompt.format_messages(query=query, chunks="\n\n".join(relevant_chunks))
         response = self.llm.invoke(messages)
+        return response.content
+
+    def generate_answer_api(self, query: str, relevant_chunks: List[str]) -> str:
+        prompt = ChatPromptTemplate.from_template("""
+        คุณเป็นผู้ช่วยในการตอบคำถาม ในคณะเทคโนโลยีดิจิทัล คุณจะตอบคำถามตอบข้อมูลใน Context ที่ได้รับ โดยคุณจะสร้างคำตอบที่เข้าใจง่ายต่อผู้ใช้ ถ้าอะไรที่คุณไม่ทราบ
+        คุณก็จะต้องบอกว่าคุณไม่ทราบ แล้วให้ติดต่อเจ้าหน้าที่
+
+        Context: {chunks}
+                                                  
+        Question: {query}
+        
+
+        Answer:
+        """)
+        messages = prompt.format_messages(query=query, chunks="\n\n".join(relevant_chunks))
+        response = self.typhoon_api.invoke(messages)
         return response.content
