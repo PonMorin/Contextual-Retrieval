@@ -24,7 +24,7 @@ def load_document(tarPath):
                 documents = loader.load()
     return documents
 
-tarPath = f"./digital_doc"
+tarPath = f"./digital_doc/course"
 document = load_document(tarPath)
 # print(document)
 print("Load Document Successful")
@@ -32,6 +32,8 @@ print("Load Document Successful")
 cr = ContextualRetrieval()
 
 for doc in document:
+    print('*'*50)
+    
     print(f"Document: {doc.metadata}")
 
     # Process the document
@@ -45,16 +47,19 @@ for doc in document:
 
     print(contextualized_chunks[0])
 
-    print('-------------Original-------------')
+    # print('-------------Original-------------')
 
-    print(original_chunks[5])
+    # print(original_chunks[3])
 
-    print('-------------Context--------------')
+    # print('-------------Context--------------')
 
-    print(contextualized_chunks[5])
+    # print(contextualized_chunks[3])
 
-    print('----------------------------')
+    # print('----------------------------')
 
     original_vectorstore = cr.create_vectoDB(original_chunks, "original")
     contextualized_vectorstore = cr.create_vectoDB(contextualized_chunks, "context")
     print(f"Save {doc.metadata} to VectorDB!!")
+
+
+    print('*'*50)
