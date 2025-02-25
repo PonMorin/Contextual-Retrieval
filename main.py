@@ -1,7 +1,4 @@
-from langchain_community.document_loaders import TextLoader, UnstructuredMarkdownLoader, PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter, MarkdownTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_community.document_loaders import TextLoader, PyPDFLoader
 from ContextualClass.contextual import ContextualRetrieval
 import os
 
