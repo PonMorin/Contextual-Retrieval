@@ -21,7 +21,7 @@ def load_document(tarPath):
                 documents = loader.load()
     return documents
 
-tarPath = f"./digital_doc/course"
+tarPath = f"./digital_doc"
 document = load_document(tarPath)
 # print(document)
 print("Load Document Successful")
