@@ -27,18 +27,25 @@ context_data = "./doc_Data/context"
 
 # Load vectorstores
 # original_vector = Chroma(persist_directory=og_data, embedding_function=OpenAIEmbeddings(), collection_name="capital")
-contextual_vector = Chroma(persist_directory=context_data, embedding_function=OpenAIEmbeddings(), collection_name="general")
+contextual_vector = Chroma(persist_directory=context_data, embedding_function=OpenAIEmbeddings(), collection_name="cdti_doc")
 
 # Define queries
-# queries = [
-#     "ชื่อปริญญาและสาขาวิชาของหลักสูตรนี้คืออะไร ผมอยากได้ทั้งชื่อภาษาไทยและภาษาอังกฤษ",
-#     "ผมอยากทราบ วัน เวลาในการดำเนินการเรียนการสอน",
-#     "จำนวนหน่วยกิตที่ต้องเรียนทั้งหมด ต้องเรียนทั้งหมดกี่หน่วยกิต",
-#     "รายวิชาของกลุ่มวิชาสังคมศาสตร์ มีรายวิชาอะไรบ้าง",
-#     "อยากทราบ แผนการศึกษา ของคณะและสาขา ปีที่ 3 ภาคการศึกษาที่ 2 ",
-#     "ช่วยอธิบายรายวิชาของ วิชาโครงสร้างของระบบคอมพิวเตอร์ ให้หน่อย",
-#     "อยากทราบขั้นตอน เกณฑ์การสำเร็จการศึกษา"
-# ]
+queries = [
+    "ชื่อปริญญาและสาขาวิชาของหลักสูตรนี้คืออะไร ผมอยากได้ทั้งชื่อภาษาไทยและภาษาอังกฤษ",
+    "ผมอยากทราบ วัน เวลาในการดำเนินการเรียนการสอน",
+    "จำนวนหน่วยกิตที่ต้องเรียนทั้งหมด ต้องเรียนทั้งหมดกี่หน่วยกิต",
+    "รายวิชาของกลุ่มวิชาสังคมศาสตร์ มีรายวิชาอะไรบ้าง",
+    "อยากทราบ แผนการศึกษา ของคณะและสาขา ปีที่ 3 ภาคการศึกษาที่ 2 ",
+    "ช่วยอธิบายรายวิชาของ วิชาโครงสร้างของระบบคอมพิวเตอร์ ให้หน่อย",
+    "อยากทราบขั้นตอน เกณฑ์การสำเร็จการศึกษา",
+    "อยากทราบวิธีการสมัครขอรับทุน",
+    "ทุนการศึกษามีกี่ประเภทและอธิบายแต่ละประเภทให้หน่อย",
+    "ผมอยากทราบคุณสมบัติและหลักเกณฑ์การขอรับทุนการศึกษา",
+    "รอบแฟ้มสะสมผลงานสามารถสมัครรับทุนได้มั้ย",
+    "หลักเกณฑ์การพิจารณาทุนส่งเสริมศักยภาพการศึกษามีอะไรบ้าง",
+    "หลักเกณฑ์การจ่ายทุนช่วยเหลือการศึกษาสำหรับผู้ขาดแคลนมีอะไรบ้าง",
+    "อยากทราบหลักเกณฑ์การจ่ายทุนพัฒนาและส่งเสริมศักยภาพผู้เรียน"
+]
 
 # queries = [
 #     "อยากทราบวิธีการสมัครขอรับทุน",
@@ -50,8 +57,8 @@ contextual_vector = Chroma(persist_directory=context_data, embedding_function=Op
 #     "อยากทราบหลักเกณฑ์การจ่ายทุนพัฒนาและส่งเสริมศักยภาพผู้เรียน"
 # ]
 
-df = pd.read_excel('/home/s6410301020/SeniorProject/Contextual-Retrieval/ข้อสอบทั่วไป.xlsx')
-queries = df["instruction"]
+# df = pd.read_excel('/home/s6410301020/SeniorProject/Contextual-Retrieval/ข้อสอบทั่วไป.xlsx')
+# queries = df["instruction"]
 
 count = 1
 
@@ -65,7 +72,7 @@ with open("query_results_v2.txt", "w", encoding="utf-8") as file:
         # original_vector_results = original_vector.similarity_search(query, k=3)
 
         # Retrieve from Contextual Vectorstore
-        contextual_vector_results = contextual_vector.similarity_search(query, k=3)
+        contextual_vector_results = contextual_vector.similarity_search(query, k=6)
 
         # Generate answers
         # original_vector_answer = cr.generate_answer_api(query, [doc.page_content for doc in original_vector_results])
