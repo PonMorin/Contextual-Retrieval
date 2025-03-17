@@ -4,19 +4,12 @@ from dotenv import dotenv_values
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import OpenAIEmbeddings
 from ContextualClass.contextual import ContextualRetrieval
+from intent.intent import (initialize_model, predict_intent)
+from intent.prompt_template import RAG_PROMPT_TEMPLATES, DYNAMIC_PROMPT_TEMPLATE
 
 # Load API key from environment file
 config = dotenv_values(".env")
 os.environ["OPENAI_API_KEY"] = config["openai_api"]
-
-# # Load the Chroma database from disk
-# chroma_db = Chroma(persist_directory="doc_Data/context", 
-#                    embedding_function=OpenAIEmbeddings(),
-#                    collection_name="capital")
-
-# # Get the collection from the Chroma database
-# collection = chroma_db.get()
-# print(collection)
 
 # Initialize the Contextual Retrieval system
 cr = ContextualRetrieval()
@@ -26,26 +19,26 @@ og_data = "./doc_Data/original"
 context_data = "./doc_Data/context"
 
 # Load vectorstores
-# original_vector = Chroma(persist_directory=og_data, embedding_function=OpenAIEmbeddings(), collection_name="capital")
 contextual_vector = Chroma(persist_directory=context_data, embedding_function=OpenAIEmbeddings(), collection_name="cdti_doc")
+retriever = contextual_vector.as_retriever(search_kwargs={"k": 4})
 
 # Define queries
-queries = [
-    "ชื่อปริญญาและสาขาวิชาของหลักสูตรนี้คืออะไร ผมอยากได้ทั้งชื่อภาษาไทยและภาษาอังกฤษ",
-    "ผมอยากทราบ วัน เวลาในการดำเนินการเรียนการสอน",
-    "จำนวนหน่วยกิตที่ต้องเรียนทั้งหมด ต้องเรียนทั้งหมดกี่หน่วยกิต",
-    "รายวิชาของกลุ่มวิชาสังคมศาสตร์ มีรายวิชาอะไรบ้าง",
-    "อยากทราบ แผนการศึกษา ของคณะและสาขา ปีที่ 3 ภาคการศึกษาที่ 2 ",
-    "ช่วยอธิบายรายวิชาของ วิชาโครงสร้างของระบบคอมพิวเตอร์ ให้หน่อย",
-    "อยากทราบขั้นตอน เกณฑ์การสำเร็จการศึกษา",
-    "อยากทราบวิธีการสมัครขอรับทุน",
-    "ทุนการศึกษามีกี่ประเภทและอธิบายแต่ละประเภทให้หน่อย",
-    "ผมอยากทราบคุณสมบัติและหลักเกณฑ์การขอรับทุนการศึกษา",
-    "รอบแฟ้มสะสมผลงานสามารถสมัครรับทุนได้มั้ย",
-    "หลักเกณฑ์การพิจารณาทุนส่งเสริมศักยภาพการศึกษามีอะไรบ้าง",
-    "หลักเกณฑ์การจ่ายทุนช่วยเหลือการศึกษาสำหรับผู้ขาดแคลนมีอะไรบ้าง",
-    "อยากทราบหลักเกณฑ์การจ่ายทุนพัฒนาและส่งเสริมศักยภาพผู้เรียน"
-]
+# queries = [
+#     "ชื่อปริญญาและสาขาวิชาของหลักสูตรนี้คืออะไร ผมอยากได้ทั้งชื่อภาษาไทยและภาษาอังกฤษ",
+#     "ผมอยากทราบ วัน เวลาในการดำเนินการเรียนการสอน",
+#     "จำนวนหน่วยกิตที่ต้องเรียนทั้งหมด ต้องเรียนทั้งหมดกี่หน่วยกิต",
+#     "รายวิชาของกลุ่มวิชาสังคมศาสตร์ มีรายวิชาอะไรบ้าง",
+#     "อยากทราบ แผนการศึกษา ของคณะและสาขา ปีที่ 3 ภาคการศึกษาที่ 2 ",
+#     "ช่วยอธิบายรายวิชาของ วิชาโครงสร้างของระบบคอมพิวเตอร์ ให้หน่อย",
+#     "อยากทราบขั้นตอน เกณฑ์การสำเร็จการศึกษา",
+#     "อยากทราบวิธีการสมัครขอรับทุน",
+#     "ทุนการศึกษามีกี่ประเภทและอธิบายแต่ละประเภทให้หน่อย",
+#     "ผมอยากทราบคุณสมบัติและหลักเกณฑ์การขอรับทุนการศึกษา",
+#     "รอบแฟ้มสะสมผลงานสามารถสมัครรับทุนได้มั้ย",
+#     "หลักเกณฑ์การพิจารณาทุนส่งเสริมศักยภาพการศึกษามีอะไรบ้าง",
+#     "หลักเกณฑ์การจ่ายทุนช่วยเหลือการศึกษาสำหรับผู้ขาดแคลนมีอะไรบ้าง",
+#     "อยากทราบหลักเกณฑ์การจ่ายทุนพัฒนาและส่งเสริมศักยภาพผู้เรียน"
+# ]
 
 # queries = [
 #     "อยากทราบวิธีการสมัครขอรับทุน",
@@ -60,54 +53,76 @@ queries = [
 # df = pd.read_excel('/home/s6410301020/SeniorProject/Contextual-Retrieval/ข้อสอบทั่วไป.xlsx')
 # queries = df["instruction"]
 
-count = 1
 
-# Open a file to save results
-with open("query_results_v2.txt", "w", encoding="utf-8") as file:
-    for query in queries:
-        file.write(f"\n{count}. Query: {query}\n")
-        print(f"\n{count}. Query: {query}")
 
-        # Retrieve from Original Vectorstore
-        # original_vector_results = original_vector.similarity_search(query, k=3)
 
-        # Retrieve from Contextual Vectorstore
-        contextual_vector_results = contextual_vector.similarity_search(query, k=6)
+# Define directories for vectorstores
+context_data = "./doc_Data/context"
 
-        # Generate answers
-        # original_vector_answer = cr.generate_answer_api(query, [doc.page_content for doc in original_vector_results])
-        contextual_vector_answer = cr.generate_answer_api(query, [doc.page_content for doc in contextual_vector_results])
+# Initialize the Contextual Retrieval system
+model = ContextualRetrieval()
+tokenizer, intent_model = initialize_model()
 
-        # Write Original Vectorstore results to file
-        # file.write("\nOriginal Vector Search Result:\n")
-        # print("\nOriginal Vector Search Result:")
-        # for i, doc in enumerate(original_vector_results, 1):
-        #     result_excerpt = doc.page_content
-        #     file.write(f"Context: {i}. {result_excerpt}\n")
-        #     print(f"Context: {i}. {result_excerpt}")
+def intention(prompt: str):
+    try:        
+        # Initialize the model when the application starts. Load the model and tokenizer
+        # tokenizer, intent_model = initialize_model()
 
-        # file.write("\nOriginal Vector Search Answer:\n")
-        # file.write(original_vector_answer + "\n")
-        # file.write("\n" + "-"*50)
-        # print("\nOriginal Vector Search Answer")
-        # print(original_vector_answer)
-        # print("\n" + "-"*50)
+        intent = predict_intent(prompt, tokenizer, intent_model)
+        
+        return intent
+    except Exception as e:
+        print(e)
+        return e
 
-        # Write Contextual Vectorstore results to file
-        file.write("\nContextual Vector Search Result:\n")
-        print("\nContextual Vector Search Result:")
-        for i, doc in enumerate(contextual_vector_results, 1):
-            result_excerpt = doc.page_content
-            file.write(f"Context: {i}. {result_excerpt}\n")
-            print(f"Context: {i}. {result_excerpt}")
 
-        file.write("\nContextual Vector Search Answer:\n")
-        file.write(contextual_vector_answer + "\n")
-        file.write("\n" + "-"*50)
-        print("\nContextual Vector Search Answer")
-        print(contextual_vector_answer)
-        print("\n" + "-"*50)
+def chat_with_model(prompt):
+    dynamic_doc = ["academic_calendar", "student_activities"]
 
-        count = count + 1
+    intent = intention(prompt=prompt)
 
-print("Results saved to query_results.txt")
+    print("intent --->", intent)
+    if intent in dynamic_doc:
+        response = f"[{intent}] Classify ผิด"
+    else:
+        system_prompt = RAG_PROMPT_TEMPLATES[intent]
+        contextual_vector = Chroma(persist_directory=context_data, embedding_function=OpenAIEmbeddings(), collection_name=f"cdti_doc")
+        retriever = contextual_vector.as_retriever(search_kwargs={"k": 4})
+
+        answer = model.generate_answer_api(prompt, system_prompt=system_prompt, retriever=retriever)
+
+        # Include the selected dropdown option in the response
+        response = f"[{intent}] {answer["answer"]}"
+
+
+    return response, intent
+
+model_name = "proideas/CDTI-intent-classification"
+
+
+
+def main():
+
+    queries = [
+    "คณบดีของคณะเทคโนโลยีดิจิทัล",
+    "คณบดีของคณะคือใคร",
+    "อาจารย์ประจำคณะมีใครบ้างครับ",
+    # "ค่าเทอมระดับปริญญาตรีของคณะเทคโนโลยีดิจิทัล",
+    # "อยากทราบค่าเทอมของคณะเทคโนโลยีดิจิทัลครับ",
+    # "ค่าเทอมของคณะดิจิทัล",
+    # "อยากทราบค่าเทอมของคณะ"
+    ]
+    
+    # Create a new DataFrame to store results
+    output_data = []
+
+    # exam_dict = {"general":general_data} 
+    for i in queries:
+
+        # intent = predict_intent(instruction,tokenizer,model_intent)
+        ai_result, pred_Intent = chat_with_model(i)  # Change selected_option as needed
+
+        print(f"Answer: {pred_Intent}, {ai_result}, \n")
+
+if __name__ == "__main__":
+    main()
