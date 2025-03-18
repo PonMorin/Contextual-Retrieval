@@ -15,7 +15,7 @@ contextual_vector = Chroma(persist_directory=context_data, embedding_function=Op
 
 document_1 = Document(
     page_content="""
-    ## บุคลากร คณบดี และ อาจารย์ประจำคณะ ของคณะเทคโนโลยีดิจิทัล
+    ## บุคลากร คณบดีของคณะเทคโนโลยีดิจิทัล และ อาจารย์ประจำคณะ ของคณะเทคโนโลยีดิจิทัล
     คณบดีประจำคณะ หรือ `ชื่อของคณบดี`: รองศาสตราจารย์ ดร. วรา วราวิทย์
     อาจารย์ประจำคณะ: 
     1. รองศาสตราจารย์ ดร. สุมาลี อุณหวณิชย์
@@ -30,6 +30,14 @@ document_1 = Document(
     10. ผู้ช่วยศาสตราจารย์ ดร. ดำรงค์ฤทธิ์ เศรษฐ์ศิริโชค
     """,
     metadata={"source": "อาจารย์ประจำคณะ"},
+)
+
+document_2 = Document(
+    page_content="""
+    ### คณบดีประจำคณะเทคโนโลยีดิจิทัล
+    คณบดีประจำคณะ หรือ `ชื่อของคณบดี` หรือ คณบดีของคณะเทคโนโลยีดิจิทัล: รองศาสตราจารย์ ดร. วรา วราวิทย์
+    """,
+    metadata={"source": "คณบดีของคณะเทคโนโลยีดิจิทัล"},
 )
 
 # document_2 = Document(
@@ -48,7 +56,7 @@ document_1 = Document(
 
 # documents = [document_1, document_2]
 
-contextual_vector.delete(ids=["อาจารย์ประจำคณะ"])
+# contextual_vector.delete(ids=["อาจารย์ประจำคณะ"])
 # contextual_vector.delete(where={"source": "./digital_doc/general/ค่าเทอม.md"})
-contextual_vector.add_documents(documents=[document_1], ids=["อาจารย์ประจำคณะ"])
+contextual_vector.add_documents(documents=[document_2], ids=["คณบดีของคณะเทคโนโลยีดิจิทัล"])
 
