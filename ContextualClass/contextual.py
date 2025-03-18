@@ -4,6 +4,7 @@ from typing import List, Tuple
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 from langchain.embeddings import OpenAIEmbeddings
+from langchain_anthropic import ChatAnthropic
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from rank_bm25 import BM25Okapi
 # from langchain_huggingface import ChatHuggingFace, HuggingFacePipeline
@@ -20,6 +21,7 @@ from dotenv import dotenv_values
 config = dotenv_values(".env")
 
 os.environ["OPENAI_API_KEY"] = config["openai_api"]
+os.environ["ANTHROPIC_API_KEY"] = config["ANTHROPIC_API_KEY"]
 typhoon_api = config["Typhoon_API"]
 
 # def init_model():
@@ -75,6 +77,11 @@ class ContextualRetrieval:
                             model='typhoon-v2-70b-instruct',
                             api_key=typhoon_api,
                             max_tokens=1024)
+        
+        self.clude_api = ChatAnthropic(model="claude-3-5-haiku-20241022",
+                        temperature=0,
+                        max_tokens_to_sample= 1500
+            )
 
         self.store = {}
         self.count = 0
@@ -127,7 +134,7 @@ class ContextualRetrieval:
         Context:
         """)
         messages = prompt.format_messages(document=document, chunk=chunk)
-        response = self.llm.invoke(messages)
+        response = self.clude_api.invoke(messages)
         return response.content
     
     def create_vectoDB(self, chunks: List[Document], path: str) -> Chroma:
