@@ -80,7 +80,7 @@ class ContextualRetrieval:
         
         self.clude_api = ChatAnthropic(model="claude-3-5-haiku-20241022",
                         temperature=0,
-                        max_tokens_to_sample= 1500
+                        max_tokens_to_sample= 1024
             )
 
         self.store = {}
@@ -142,7 +142,7 @@ class ContextualRetrieval:
         Create a vector DB for the given chunks
         """
         data = f"./doc_Data/{path}"
-        vectordb = Chroma.from_documents(chunks, embedding=OpenAIEmbeddings(), persist_directory=data, collection_name="capital")
+        vectordb = Chroma.from_documents(chunks, embedding=OpenAIEmbeddings(), persist_directory=data, collection_name="cdti_doc")
         vectordb.persist()
 
     def create_bm25_index(self, chunks: List[Document]) -> BM25Okapi:
@@ -181,9 +181,9 @@ class ContextualRetrieval:
         question_answer_chain = create_stuff_documents_chain(self.typhoon_api, qa_prompt)
 
         rag_chain = create_retrieval_chain(retriever, question_answer_chain)
-
+        
         response = rag_chain.invoke({"input": query})
-
+        print(response)
         return response
 
 
