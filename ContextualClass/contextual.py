@@ -178,7 +178,7 @@ class ContextualRetrieval:
             ]
         )
 
-        question_answer_chain = create_stuff_documents_chain(self.typhoon_api, qa_prompt)
+        question_answer_chain = create_stuff_documents_chain(self.clude_api, qa_prompt)
 
         rag_chain = create_retrieval_chain(retriever, question_answer_chain)
         
@@ -219,7 +219,7 @@ class ContextualRetrieval:
 
         check_answer = qa_prompt.format_messages(input=llm_answer)
 
-        response = self.typhoon_api.invoke(check_answer)
+        response = self.clude_api.invoke(check_answer)
 
         return response
     
